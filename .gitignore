@@ -1,0 +1,1 @@
+node_modules/echo .envecho .env.localecho dist/echo build/echo *.logecho .DS_Store
