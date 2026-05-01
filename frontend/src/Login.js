@@ -2,7 +2,6 @@ import { useNavigate, Link } from "react-router-dom";
 import { useState } from "react";
 import axios from "axios";
 
-
 const styles = `
   @import url('https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500&display=swap');
 
@@ -96,6 +95,63 @@ const styles = `
     font-weight: 300;
   }
 
+  .role-selector {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    margin-bottom: 1.5rem;
+  }
+
+  .role-option {
+    position: relative;
+    cursor: pointer;
+  }
+
+  .role-option input {
+    position: absolute;
+    opacity: 0;
+    width: 0;
+    height: 0;
+  }
+
+  .role-label {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    padding: 1rem;
+    border-radius: 14px;
+    border: 1.5px solid rgba(255,255,255,0.07);
+    background: rgba(255,255,255,0.02);
+    cursor: pointer;
+    transition: all 0.2s ease;
+  }
+
+  .role-label:hover {
+    border-color: rgba(99,102,241,0.4);
+    background: rgba(99,102,241,0.05);
+  }
+
+  .role-option input:checked + .role-label {
+    border-color: #6366f1;
+    background: rgba(99,102,241,0.1);
+  }
+
+  .role-icon { 
+    font-size: 1.5rem; 
+  }
+
+  .role-name {
+    font-size: 0.8rem;
+    font-weight: 500;
+    color: rgba(255,255,255,0.6);
+    letter-spacing: 0.02em;
+  }
+
+  .role-option input:checked + .role-label .role-name {
+    color: #a5b4fc;
+  }
+
   .field-group {
     display: flex;
     flex-direction: column;
@@ -127,7 +183,9 @@ const styles = `
     box-sizing: border-box;
   }
 
-  .field-input::placeholder { color: rgba(255,255,255,0.2); }
+  .field-input::placeholder { 
+    color: rgba(255,255,255,0.2); 
+  }
 
   .field-input:focus {
     border-color: rgba(99,102,241,0.6);
@@ -148,7 +206,9 @@ const styles = `
     transition: color 0.2s;
   }
 
-  .forgot-link:hover { color: #a5b4fc; }
+  .forgot-link:hover { 
+    color: #a5b4fc; 
+  }
 
   .auth-btn {
     width: 100%;
@@ -165,9 +225,19 @@ const styles = `
     margin-bottom: 1.5rem;
   }
 
-  .auth-btn:hover:not(:disabled) { opacity: 0.9; transform: translateY(-1px); }
-  .auth-btn:active:not(:disabled) { transform: translateY(0); }
-  .auth-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+  .auth-btn:hover:not(:disabled) { 
+    opacity: 0.9; 
+    transform: translateY(-1px); 
+  }
+
+  .auth-btn:active:not(:disabled) { 
+    transform: translateY(0); 
+  }
+
+  .auth-btn:disabled { 
+    opacity: 0.5; 
+    cursor: not-allowed; 
+  }
 
   .auth-btn-loader {
     display: inline-block;
@@ -181,7 +251,9 @@ const styles = `
     margin-right: 8px;
   }
 
-  @keyframes spin { to { transform: rotate(360deg); } }
+  @keyframes spin { 
+    to { transform: rotate(360deg); } 
+  }
 
   .auth-divider {
     display: flex;
@@ -214,7 +286,9 @@ const styles = `
     transition: color 0.2s;
   }
 
-  .auth-footer a:hover { color: #c7d2fe; }
+  .auth-footer a:hover { 
+    color: #c7d2fe; 
+  }
 
   .auth-error {
     background: rgba(239,68,68,0.1);
@@ -226,10 +300,6 @@ const styles = `
     margin-bottom: 1rem;
   }
 `;
-
-
-
-
 
 function Login() {
     const navigate = useNavigate();
@@ -283,10 +353,21 @@ function Login() {
 
         try {
             const res = await axios.post("http://localhost:5000/api/auth/login", form);
+            
+            // Store user data in localStorage
+            if (res.data.user) {
+                localStorage.setItem('userID', res.data.user.userID || res.data.user.id);
+                localStorage.setItem('userRole', res.data.user.role);
+                localStorage.setItem('userName', res.data.user.name);
+                localStorage.setItem('userEmail', res.data.user.email);
+                localStorage.setItem('isAuthenticated', 'true');
+            }
+
             alert(res.data?.message || "Login successful");
             navigate("/dashboard");
         } catch (err) {
-            setErrors({ ...errors, server: err.response?.data?.message || "Server not responding" });
+            const errorMessage = err.response?.data?.message || "Server not responding";
+            setErrors({ ...errors, server: errorMessage });
         } finally {
             setLoading(false);
         }
@@ -306,7 +387,7 @@ function Login() {
                     <p className="auth-subtext">Sign in to continue to your dashboard.</p>
 
                     {/* Role Selector */}
-                    <div className="role-selector" style={{ marginBottom: "1.5rem" }}>
+                    <div style={{ marginBottom: "1.5rem" }}>
                         {[
                             { value: "Student", icon: "🎓", label: "Student" },
                             { value: "Admin", icon: "🛡️", label: "Admin" },
@@ -319,7 +400,7 @@ function Login() {
                                     checked={form.role === value}
                                     onChange={update("role")}
                                 />
-                                <span className="role-label" style={{ display: "flex", alignItems: "center", gap: "5px", padding: "0.5rem 1rem" }}>
+                                <span className="role-label">
                                     <span className="role-icon">{icon}</span>
                                     <span className="role-name">{label}</span>
                                 </span>
@@ -378,9 +459,6 @@ function Login() {
             </div>
         </>
     );
-    <p>
-  Don't have an account? <Link to="/">Signup</Link>
-</p>
 }
 
 export default Login;

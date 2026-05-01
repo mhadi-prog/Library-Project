@@ -1,9 +1,16 @@
 import { useNavigate } from "react-router-dom";
 import { useState } from "react";
 
-
-
-
+// Import all components
+import SearchBooks from "./SearchBooks";
+import MyBooks from "./MyBooks";
+import ViewFines from "./ViewFines";
+import ManageBooks from "./ManageBooks";
+import AddBook from "./AddBooks";
+import BookIssuance from "./BookIssuance";
+import SearchStudent from "./SearchStudent";
+import CalculateFines from "./CalculateFines";
+import ChangePassword from "./ChangePassword";
 
 const styles = `
   @import url('https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500&display=swap');
@@ -169,6 +176,27 @@ const styles = `
     margin-top: auto;
   }
 
+  .user-info {
+    padding: 1rem;
+    background: rgba(99,102,241,0.08);
+    border-radius: 10px;
+    border: 1px solid rgba(99,102,241,0.2);
+    margin-bottom: 1rem;
+  }
+
+  .user-name {
+    font-family: 'Syne', sans-serif;
+    font-weight: 600;
+    font-size: 0.85rem;
+    color: #fff;
+    margin-bottom: 0.3rem;
+  }
+
+  .user-email {
+    font-size: 0.7rem;
+    color: rgba(255,255,255,0.4);
+  }
+
   .logout-btn {
     width: 100%;
     padding: 0.85rem;
@@ -192,177 +220,70 @@ const styles = `
   .main-content {
     display: flex;
     flex-direction: column;
-    padding: 3rem;
+    overflow-y: auto;
+    background: #0a0a0f;
   }
 
-  .header {
-    display: flex;
-    justify-content: space-between;
-    align-items: flex-start;
-    margin-bottom: 3rem;
-    animation: slideDown 0.6s cubic-bezier(0.16, 1, 0.3, 1);
-  }
-
-  @keyframes slideDown {
-    from { opacity: 0; transform: translateY(-20px); }
-    to   { opacity: 1; transform: translateY(0); }
-  }
-
-  .header-left h1 {
-    font-family: 'Syne', sans-serif;
-    font-weight: 800;
-    font-size: 2.2rem;
-    color: #fff;
-    letter-spacing: -0.03em;
-    margin-bottom: 0.5rem;
-  }
-
-  .header-left p {
-    font-size: 0.95rem;
-    color: rgba(255,255,255,0.4);
-  }
-
-  .header-user {
-    display: flex;
-    flex-direction: column;
-    align-items: flex-end;
-    gap: 8px;
-  }
-
-  .user-name {
-    font-family: 'Syne', sans-serif;
-    font-weight: 700;
-    font-size: 1.1rem;
-    color: #fff;
-  }
-
-  .user-email {
-    font-size: 0.85rem;
-    color: rgba(255,255,255,0.4);
-  }
-
-  .content-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
-    gap: 1.5rem;
-    margin-bottom: 2rem;
-  }
-
-  .card {
-    background: rgba(255,255,255,0.03);
-    border: 1px solid rgba(255,255,255,0.07);
-    border-radius: 16px;
-    padding: 1.5rem;
-    backdrop-filter: blur(20px);
-    animation: cardIn 0.6s cubic-bezier(0.16, 1, 0.3, 1) both;
-    transition: all 0.2s ease;
-  }
-
-  .card:nth-child(1) { animation-delay: 0.1s; }
-  .card:nth-child(2) { animation-delay: 0.2s; }
-  .card:nth-child(3) { animation-delay: 0.3s; }
-  .card:nth-child(4) { animation-delay: 0.4s; }
-
-  @keyframes cardIn {
-    from { opacity: 0; transform: translateY(20px); }
-    to   { opacity: 1; transform: translateY(0); }
-  }
-
-  .card:hover {
-    border-color: rgba(99,102,241,0.3);
-    background: rgba(99,102,241,0.05);
-    transform: translateY(-4px);
-  }
-
-  .card-header {
-    display: flex;
+  .mobile-header {
+    display: none;
     align-items: center;
-    gap: 12px;
-    margin-bottom: 1rem;
+    justify-content: space-between;
+    padding: 1rem;
+    background: rgba(255,255,255,0.03);
+    border-bottom: 1px solid rgba(255,255,255,0.07);
   }
 
-  .card-icon {
-    font-size: 2rem;
-  }
-
-  .card-title {
-    font-family: 'Syne', sans-serif;
-    font-weight: 700;
-    font-size: 1.1rem;
+  .mobile-menu-btn {
+    background: none;
+    border: none;
     color: #fff;
-  }
-
-  .card-description {
-    font-size: 0.85rem;
-    color: rgba(255,255,255,0.5);
-    margin-bottom: 1rem;
-    line-height: 1.5;
-  }
-
-  .card-btn {
-    width: 100%;
-    padding: 0.75rem;
-    border: 1.5px solid rgba(99,102,241,0.3);
-    background: rgba(99,102,241,0.08);
-    border-radius: 10px;
-    color: #a5b4fc;
-    font-family: 'DM Sans', sans-serif;
-    font-weight: 600;
-    font-size: 0.85rem;
-    cursor: pointer;
-    transition: all 0.2s ease;
-  }
-
-  .card-btn:hover {
-    background: rgba(99,102,241,0.15);
-    border-color: rgba(99,102,241,0.5);
-    color: #c7d2fe;
-  }
-
-  .welcome-card {
-    grid-column: 1 / -1;
-    background: linear-gradient(135deg, rgba(99,102,241,0.1) 0%, rgba(16,185,129,0.08) 100%);
-    border: 1.5px solid rgba(99,102,241,0.2);
-  }
-
-  .welcome-card h2 {
-    font-family: 'Syne', sans-serif;
-    font-weight: 700;
     font-size: 1.5rem;
-    color: #fff;
-    margin-bottom: 0.5rem;
+    cursor: pointer;
   }
 
-  .welcome-card p {
-    font-size: 0.95rem;
-    color: rgba(255,255,255,0.6);
-    line-height: 1.6;
+  .mobile-sidebar-overlay {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.7);
+    z-index: 999;
   }
 
-  .empty-state {
-    text-align: center;
-    padding: 3rem;
-    border-radius: 16px;
-    background: rgba(255,255,255,0.02);
-    border: 1.5px dashed rgba(255,255,255,0.1);
+  .mobile-sidebar-overlay.active {
+    display: block;
   }
 
-  .empty-state-icon {
-    font-size: 3rem;
-    margin-bottom: 1rem;
+  .mobile-sidebar {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 280px;
+    height: 100vh;
+    background: rgba(255,255,255,0.03);
+    border-right: 1px solid rgba(255,255,255,0.07);
+    backdrop-filter: blur(20px);
+    padding: 2rem 1.5rem;
+    z-index: 1000;
+    overflow-y: auto;
+    flex-direction: column;
   }
 
-  .empty-state h3 {
-    font-family: 'Syne', sans-serif;
-    font-weight: 700;
-    font-size: 1.3rem;
-    color: #fff;
-    margin-bottom: 0.5rem;
+  .mobile-sidebar.active {
+    display: flex;
   }
 
-  .empty-state p {
-    font-size: 0.9rem;
-    color: rgba(255,255,255,0.4);
+  /* Component transition */
+  .component-container {
+    animation: fadeIn 0.3s ease;
+  }
+
+  @keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
   }
 
   /* RESPONSIVE */
@@ -372,47 +293,24 @@ const styles = `
     }
 
     .sidebar {
-      grid-column: 1 / -1;
-      height: auto;
-      flex-direction: row;
-      overflow-x: auto;
-      overflow-y: visible;
-      padding: 1rem;
-      border-right: none;
-      border-bottom: 1px solid rgba(255,255,255,0.07);
-    }
-
-    .sidebar-menu {
-      flex-direction: row;
-      gap: 1rem;
-      overflow-x: auto;
-      flex: 1;
-    }
-
-    .sidebar-section-title {
       display: none;
     }
 
-    .main-content {
-      padding: 2rem 1rem;
+    .mobile-header {
+      display: flex;
     }
 
-    .header {
-      flex-direction: column;
-      gap: 1rem;
+    .mobile-sidebar-overlay.active {
+      display: block;
     }
 
-    .header-user {
-      align-items: flex-start;
-    }
-
-    .content-grid {
-      grid-template-columns: 1fr;
+    .mobile-sidebar.active {
+      display: flex;
     }
   }
 `;
 
-// Menu items for different roles
+// Menu items configuration
 const menuConfig = {
   Student: [
     { id: "search-books", label: "Search Books", icon: "🔍", category: "Library" },
@@ -430,118 +328,129 @@ const menuConfig = {
   ],
 };
 
-// Feature descriptions
-const featureDescriptions = {
-  "search-books": "Find books in the library catalog by title, author, or genre.",
-  "my-books": "View all books you have borrowed and their due dates.",
-  "view-fines": "Check any overdue fines on your account.",
-  "change-password": "Update your account password for security.",
-  "manage-books": "Add, edit, or delete books from the library collection.",
-  "add-book": "Register a new book in the system.",
-  "book-issuance": "Issue books to students and track borrowing.",
-  "search-student": "Look up student details and borrowing history.",
-  "calculate-fines": "Compute fines for overdue books.",
+// Component mapping
+const componentMap = {
+  "search-books": SearchBooks,
+  "my-books": MyBooks,
+  "view-fines": ViewFines,
+  "manage-books": ManageBooks,
+  "add-book": AddBook,
+  "book-issuance": BookIssuance,
+  "search-student": SearchStudent,
+  "calculate-fines": CalculateFines,
+  "change-password": ChangePassword,
 };
 
 function Dashboard() {
   const navigate = useNavigate();
-  const [activeMenu, setActiveMenu] = useState("search-books"); // Default menu
-  const [userRole] = useState("Student"); // In a real app, get from auth context
-  const [userName] = useState("Jane Doe"); // In a real app, get from auth context
-  const [userEmail] = useState("jane@example.com"); // In a real app, get from auth context
+  const [activeMenu, setActiveMenu] = useState("search-books");
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  
+  // Get user data from localStorage
+  const userRole = localStorage.getItem('userRole') || "Student";
+  const userName = localStorage.getItem('userName') || "User";
+  const userEmail = localStorage.getItem('userEmail') || "user@example.com";
 
+  // Get menu items for current role
   const menuItems = menuConfig[userRole] || [];
   const categories = Array.from(new Set(menuItems.map(item => item.category)));
 
+  // Get current component to render
+  const CurrentComponent = componentMap[activeMenu] || SearchBooks;
+
   const handleLogout = () => {
-    // Clear auth data and navigate
-    navigate("/");
+    // Clear auth data
+    localStorage.removeItem('userID');
+    localStorage.removeItem('userRole');
+    localStorage.removeItem('userName');
+    localStorage.removeItem('userEmail');
+    localStorage.removeItem('isAuthenticated');
+    navigate("/login");
   };
 
-  const renderContent = () => {
-    return (
-      <div className="content-grid">
-        <div className="card welcome-card">
-          <h2>Welcome back, {userName}! 👋</h2>
-          <p>You're logged in as a {userRole}. Explore the menu on the left to manage library resources and access your account.</p>
-        </div>
+  const handleMenuClick = (menuId) => {
+    setActiveMenu(menuId);
+    setMobileMenuOpen(false);
+  };
 
-        {menuItems.map((item) => (
-          <div
-            key={item.id}
-            className="card"
-            onClick={() => setActiveMenu(item.id)}
-            style={{ cursor: "pointer" }}
-          >
-            <div className="card-header">
-              <span className="card-icon">{item.icon}</span>
-              <span className="card-title">{item.label}</span>
-            </div>
-            <p className="card-description">
-              {featureDescriptions[item.id] || "Manage library resources."}
-            </p>
-            <button className="card-btn">Open →</button>
+  const SidebarContent = () => (
+    <>
+      <div className="sidebar-brand">
+        <div className="sidebar-brand-dot" />
+        <span className="sidebar-brand-name">Booked</span>
+      </div>
+
+      <div className="sidebar-role-badge">{userRole}</div>
+
+      <div className="sidebar-menu">
+        {categories.map((category) => (
+          <div key={category}>
+            <div className="sidebar-section-title">{category}</div>
+            {menuItems
+              .filter((item) => item.category === category)
+              .map((item) => (
+                <div
+                  key={item.id}
+                  className={`menu-item ${activeMenu === item.id ? "active" : ""}`}
+                  onClick={() => handleMenuClick(item.id)}
+                >
+                  <span className="menu-icon">{item.icon}</span>
+                  <span>{item.label}</span>
+                </div>
+              ))}
           </div>
         ))}
       </div>
-    );
-  };
+
+      <div className="sidebar-footer">
+        <div className="user-info">
+          <div className="user-name">{userName}</div>
+          <div className="user-email">{userEmail}</div>
+        </div>
+        <button className="logout-btn" onClick={handleLogout}>
+          Logout
+        </button>
+      </div>
+    </>
+  );
 
   return (
     <>
       <style>{styles}</style>
       <div className="dashboard-root">
         <div className="dashboard-container">
-          {/* SIDEBAR */}
+          {/* DESKTOP SIDEBAR */}
           <aside className="sidebar">
-            <div className="sidebar-brand">
-              <div className="sidebar-brand-dot" />
-              <span className="sidebar-brand-name">Booked</span>
-            </div>
+            <SidebarContent />
+          </aside>
 
-            <div className="sidebar-role-badge">{userRole}</div>
+          {/* MOBILE SIDEBAR OVERLAY */}
+          <div 
+            className={`mobile-sidebar-overlay ${mobileMenuOpen ? "active" : ""}`}
+            onClick={() => setMobileMenuOpen(false)}
+          />
 
-            <div className="sidebar-menu">
-              {categories.map((category) => (
-                <div key={category}>
-                  <div className="sidebar-section-title">{category}</div>
-                  {menuItems
-                    .filter((item) => item.category === category)
-                    .map((item) => (
-                      <div
-                        key={item.id}
-                        className={`menu-item ${activeMenu === item.id ? "active" : ""}`}
-                        onClick={() => setActiveMenu(item.id)}
-                      >
-                        <span className="menu-icon">{item.icon}</span>
-                        <span>{item.label}</span>
-                      </div>
-                    ))}
-                </div>
-              ))}
-            </div>
-
-            <div className="sidebar-footer">
-              <button className="logout-btn" onClick={handleLogout}>
-                Logout
-              </button>
-            </div>
+          {/* MOBILE SIDEBAR */}
+          <aside className={`mobile-sidebar ${mobileMenuOpen ? "active" : ""}`}>
+            <SidebarContent />
           </aside>
 
           {/* MAIN CONTENT */}
           <main className="main-content">
-            <div className="header">
-              <div className="header-left">
-                <h1>📚 Library Dashboard</h1>
-                <p>Manage and explore library resources effortlessly</p>
-              </div>
-              <div className="header-user">
-                <div className="user-name">{userName}</div>
-                <div className="user-email">{userEmail}</div>
-              </div>
+            <div className="mobile-header">
+              <button 
+                className="mobile-menu-btn"
+                onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+              >
+                ☰
+              </button>
+              <div className="sidebar-brand-name">Booked</div>
+              <div style={{ width: "40px" }} />
             </div>
 
-            {renderContent()}
+            <div className="component-container">
+              <CurrentComponent />
+            </div>
           </main>
         </div>
       </div>

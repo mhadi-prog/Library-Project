@@ -137,7 +137,9 @@ const styles = `
     background: rgba(99,102,241,0.1);
   }
 
-  .role-icon { font-size: 1.5rem; }
+  .role-icon { 
+    font-size: 1.5rem; 
+  }
 
   .role-name {
     font-size: 0.8rem;
@@ -181,7 +183,9 @@ const styles = `
     box-sizing: border-box;
   }
 
-  .field-input::placeholder { color: rgba(255,255,255,0.2); }
+  .field-input::placeholder { 
+    color: rgba(255,255,255,0.2); 
+  }
 
   .field-input:focus {
     border-color: rgba(99,102,241,0.6);
@@ -203,9 +207,19 @@ const styles = `
     margin-bottom: 1.5rem;
   }
 
-  .auth-btn:hover:not(:disabled) { opacity: 0.9; transform: translateY(-1px); }
-  .auth-btn:active:not(:disabled) { transform: translateY(0); }
-  .auth-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+  .auth-btn:hover:not(:disabled) { 
+    opacity: 0.9; 
+    transform: translateY(-1px); 
+  }
+
+  .auth-btn:active:not(:disabled) { 
+    transform: translateY(0); 
+  }
+
+  .auth-btn:disabled { 
+    opacity: 0.5; 
+    cursor: not-allowed; 
+  }
 
   .auth-btn-loader {
     display: inline-block;
@@ -219,7 +233,9 @@ const styles = `
     margin-right: 8px;
   }
 
-  @keyframes spin { to { transform: rotate(360deg); } }
+  @keyframes spin { 
+    to { transform: rotate(360deg); } 
+  }
 
   .auth-divider {
     display: flex;
@@ -252,7 +268,9 @@ const styles = `
     transition: color 0.2s;
   }
 
-  .auth-footer a:hover { color: #c7d2fe; }
+  .auth-footer a:hover { 
+    color: #c7d2fe; 
+  }
 
   .auth-error {
     background: rgba(239,68,68,0.1);
@@ -268,13 +286,12 @@ const styles = `
 function Signup() {
     const navigate = useNavigate();
     const [form, setForm] = useState({ name: "", email: "", password: "", role: "Student" });
-    const [errors, setErrors] = useState({}); // store per-field errors
+    const [errors, setErrors] = useState({});
     const [loading, setLoading] = useState(false);
 
-    // Regex for basic email validation
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
-    // Live validation function for a single field
+    // Regex for basic email validation
     const validateField = (field, value) => {
         switch (field) {
             case "name":
@@ -318,16 +335,25 @@ function Signup() {
 
     const handleSubmit = async (e) => {
         e.preventDefault();
-        if (!validateForm()) return; // prevent submit if errors exist
+        if (!validateForm()) return;
         setLoading(true);
         try {
-            
             const res = await axios.post("http://localhost:5000/api/auth/signup", form);
+            
+            // Store user data in localStorage
+            if (res.data.user) {
+                localStorage.setItem('userID', res.data.user.userID || res.data.user.id);
+                localStorage.setItem('userRole', res.data.user.role);
+                localStorage.setItem('userName', res.data.user.name);
+                localStorage.setItem('userEmail', res.data.user.email);
+                localStorage.setItem('isAuthenticated', 'true');
+            }
+
             alert(res.data?.message || "Signup successful");
             navigate("/dashboard");
         } catch (err) {
-            // Show server error at the top
-            setErrors({ ...errors, server: err.response?.data?.message || "Server not responding" });
+            const errorMessage = err.response?.data?.message || "Server not responding";
+            setErrors({ ...errors, server: errorMessage });
         } finally {
             setLoading(false);
         }
@@ -425,7 +451,6 @@ function Signup() {
             </div>
         </>
     );
-  
 }
 
 export default Signup;
