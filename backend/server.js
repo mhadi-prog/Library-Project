@@ -20,7 +20,9 @@ const booksRoutes = require('./routes/booksRoutes.js');
 const borrowRoutes = require('./routes/borrowRoutes.js');
 const fineRoutes = require('./routes/finesRoutes.js');
 const userRoutes = require('./routes/userRoutes.js');
-
+const analyticsRoutes = require('./routes/analyticsRoutes.js');
+app.use('/api/analytics', analyticsRoutes);
+app.use('/api/borrow-request', require('./routes/borrowRequestRoutes.js'));
 app.use('/api/auth', authRoutes);
 app.use('/api/books', booksRoutes);
 app.use('/api/borrow', borrowRoutes);

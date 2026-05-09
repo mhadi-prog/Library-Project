@@ -207,6 +207,158 @@ const styles = `
     font-size: 0.9rem;
     margin-bottom: 1.5rem;
   }
+
+  /* MODAL STYLES */
+  .modal-overlay {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.7);
+    z-index: 1000;
+    align-items: center;
+    justify-content: center;
+    padding: 1rem;
+  }
+
+  .modal-overlay.active {
+    display: flex;
+  }
+
+  .modal-content {
+    background: rgba(10, 10, 15, 0.95);
+    border: 1px solid rgba(255,255,255,0.07);
+    border-radius: 16px;
+    padding: 2rem;
+    max-width: 800px;
+    width: 100%;
+    max-height: 90vh;
+    overflow-y: auto;
+    backdrop-filter: blur(20px);
+  }
+
+  .modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1.5rem;
+    border-bottom: 1px solid rgba(255,255,255,0.07);
+    padding-bottom: 1rem;
+  }
+
+  .modal-title {
+    font-family: 'Syne', sans-serif;
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: #fff;
+  }
+
+  .modal-close {
+    background: none;
+    border: none;
+    color: rgba(255,255,255,0.5);
+    font-size: 1.5rem;
+    cursor: pointer;
+    padding: 0;
+  }
+
+  .modal-close:hover {
+    color: #fff;
+  }
+
+  .history-table {
+    width: 100%;
+    border-collapse: collapse;
+  }
+
+  .history-table thead {
+    background: rgba(255,255,255,0.05);
+  }
+
+  .history-table th {
+    padding: 0.8rem;
+    text-align: left;
+    font-size: 0.75rem;
+    font-weight: 700;
+    color: rgba(255,255,255,0.4);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    border-bottom: 1px solid rgba(255,255,255,0.07);
+  }
+
+  .history-table td {
+    padding: 0.8rem;
+    border-bottom: 1px solid rgba(255,255,255,0.07);
+    font-size: 0.85rem;
+    color: rgba(255,255,255,0.8);
+  }
+
+  .status-badge {
+    display: inline-block;
+    border-radius: 4px;
+    padding: 0.3rem 0.6rem;
+    font-size: 0.65rem;
+    font-weight: 600;
+    text-transform: uppercase;
+  }
+
+  .status-active {
+    background: rgba(99,102,241,0.15);
+    color: #a5b4fc;
+  }
+
+  .status-returned {
+    background: rgba(16,185,129,0.15);
+    color: #6ee7b7;
+  }
+
+  .status-overdue {
+    background: rgba(239,68,68,0.15);
+    color: #fca5a5;
+  }
+
+  .modal-loading {
+    text-align: center;
+    padding: 2rem;
+    color: rgba(255,255,255,0.5);
+  }
+
+  .modal-empty {
+    text-align: center;
+    padding: 2rem;
+    color: rgba(255,255,255,0.4);
+  }
+
+  .stats-row {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+  }
+
+  .stat-item {
+    background: rgba(99,102,241,0.08);
+    border: 1px solid rgba(99,102,241,0.2);
+    border-radius: 8px;
+    padding: 0.8rem;
+    text-align: center;
+  }
+
+  .stat-label {
+    font-size: 0.7rem;
+    color: rgba(255,255,255,0.4);
+    text-transform: uppercase;
+    font-weight: 600;
+    margin-bottom: 0.3rem;
+  }
+
+  .stat-value {
+    font-size: 1.4rem;
+    font-weight: 700;
+    color: #a5b4fc;
+  }
 `;
 
 function SearchStudent() {
@@ -215,6 +367,18 @@ function SearchStudent() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [hasSearched, setHasSearched] = useState(false);
+  
+  // Modal states
+  const [showModal, setShowModal] = useState(false);
+  const [selectedStudent, setSelectedStudent] = useState(null);
+  const [history, setHistory] = useState([]);
+  const [historyLoading, setHistoryLoading] = useState(false);
+  const [historyError, setHistoryError] = useState("");
+  const [historyStats, setHistoryStats] = useState({
+    total: 0,
+    returned: 0,
+    active: 0
+  });
 
   const handleSearch = async (e) => {
     e.preventDefault();
@@ -242,8 +406,59 @@ function SearchStudent() {
     }
   };
 
-  const handleViewHistory = (userID) => {
-    alert(`View borrowing history for student ${userID} - functionality to be implemented`);
+  const handleViewHistory = async (student) => {
+    setSelectedStudent(student);
+    setShowModal(true);
+    setHistory([]);
+    setHistoryError("");
+    setHistoryLoading(true);
+
+    try {
+      const response = await axios.get(
+        `http://localhost:5000/api/user/history/${student.UserID}`
+      );
+      
+      if (response.data.books && response.data.books.length > 0) {
+        setHistory(response.data.books);
+        calculateStats(response.data.books);
+      } else {
+        setHistory([]);
+        setHistoryError("No borrowing history found");
+      }
+    } catch (err) {
+      setHistoryError(err.response?.data?.message || "Failed to load history");
+      setHistory([]);
+      console.error(err);
+    } finally {
+      setHistoryLoading(false);
+    }
+  };
+
+  const calculateStats = (historyData) => {
+    const total = historyData.length;
+    const returned = historyData.filter(h => h.ReturnDate).length;
+    const active = total - returned;
+
+    setHistoryStats({
+      total,
+      returned,
+      active
+    });
+  };
+
+  const getStatusBadge = (record) => {
+    if (record.ReturnDate) {
+      return <span className="status-badge status-returned">Returned</span>;
+    } else if (new Date(record.DueDate) < new Date()) {
+      return <span className="status-badge status-overdue">Overdue</span>;
+    } else {
+      return <span className="status-badge status-active">Active</span>;
+    }
+  };
+
+  const formatDate = (dateString) => {
+    if (!dateString) return "-";
+    return new Date(dateString).toLocaleDateString();
   };
 
   return (
@@ -293,16 +508,16 @@ function SearchStudent() {
                   </div>
                   <div className="student-info-item">
                     <span>🏢</span>
-                    <span>{student.Department}</span>
+                    <span>{student.Department || "N/A"}</span>
                   </div>
                   <div className="student-info-item">
                     <span>📅</span>
-                    <span>Batch {student.BatchYear}</span>
+                    <span>Batch {student.BatchYear || "N/A"}</span>
                   </div>
                 </div>
                 <button 
                   className="action-btn"
-                  onClick={() => handleViewHistory(student.UserID)}
+                  onClick={() => handleViewHistory(student)}
                 >
                   View History →
                 </button>
@@ -310,6 +525,72 @@ function SearchStudent() {
             ))}
           </div>
         ) : null}
+      </div>
+
+      {/* HISTORY MODAL */}
+      <div className={`modal-overlay ${showModal ? 'active' : ''}`} onClick={() => setShowModal(false)}>
+        <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+          <div className="modal-header">
+            <div>
+              <div className="modal-title">📚 Borrowing History</div>
+              {selectedStudent && <p style={{ color: 'rgba(255,255,255,0.5)', fontSize: '0.9rem', marginTop: '0.3rem' }}>{selectedStudent.Name}</p>}
+            </div>
+            <button className="modal-close" onClick={() => setShowModal(false)}>✕</button>
+          </div>
+
+          {historyLoading ? (
+            <div className="modal-loading">
+              <div className="spinner"></div>
+              <p>Loading history...</p>
+            </div>
+          ) : historyError ? (
+            <div className="modal-empty">⚠️ {historyError}</div>
+          ) : history.length === 0 ? (
+            <div className="modal-empty">No borrowing history found</div>
+          ) : (
+            <>
+              <div className="stats-row">
+                <div className="stat-item">
+                  <div className="stat-label">Total Borrowed</div>
+                  <div className="stat-value">{historyStats.total}</div>
+                </div>
+                <div className="stat-item">
+                  <div className="stat-label">Returned</div>
+                  <div className="stat-value">{historyStats.returned}</div>
+                </div>
+                <div className="stat-item">
+                  <div className="stat-label">Active</div>
+                  <div className="stat-value">{historyStats.active}</div>
+                </div>
+              </div>
+
+              <table className="history-table">
+                <thead>
+                  <tr>
+                    <th>Book Title</th>
+                    <th>Authors</th>
+                    <th>Issue Date</th>
+                    <th>Due Date</th>
+                    <th>Return Date</th>
+                    <th>Status</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {history.map((record, index) => (
+                    <tr key={index}>
+                      <td>{record.Title}</td>
+                      <td>{record.Authors || "Unknown"}</td>
+                      <td>{formatDate(record.IssueDate)}</td>
+                      <td>{formatDate(record.DueDate)}</td>
+                      <td>{formatDate(record.ReturnDate)}</td>
+                      <td>{getStatusBadge(record)}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </>
+          )}
+        </div>
       </div>
     </>
   );

@@ -356,6 +356,7 @@ function Login() {
             
             // Store user data in localStorage
             if (res.data.user) {
+              console.log("Login Role:", res.data.user.role);
                 localStorage.setItem('userID', res.data.user.userID || res.data.user.id);
                 localStorage.setItem('userRole', res.data.user.role);
                 localStorage.setItem('userName', res.data.user.name);

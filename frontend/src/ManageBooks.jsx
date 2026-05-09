@@ -5,7 +5,7 @@ const styles = `
   @import url('https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500&display=swap');
 
   .manage-books-container {
-    padding: 2rem;
+    padding: 1.2rem;
     background: #0a0a0f;
     min-height: 100vh;
     font-family: 'DM Sans', sans-serif;
@@ -15,42 +15,23 @@ const styles = `
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: 2.5rem;
-    animation: slideDown 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+    margin-bottom: 1.5rem;
   }
 
   .page-header h1 {
     font-family: 'Syne', sans-serif;
-    font-size: 2rem;
+    font-size: 1.5rem;
     font-weight: 800;
     color: #fff;
-    letter-spacing: -0.03em;
   }
 
-  .add-btn {
-    padding: 0.85rem 1.5rem;
-    background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%);
-    border: none;
-    border-radius: 12px;
-    color: #fff;
-    font-family: 'Syne', sans-serif;
-    font-weight: 700;
-    font-size: 0.9rem;
-    cursor: pointer;
-    transition: all 0.2s ease;
-  }
-
-  .add-btn:hover {
-    opacity: 0.9;
-    transform: translateY(-2px);
-  }
+  /* .add-btn class removed as it is no longer used */
 
   .books-table-container {
     background: rgba(255,255,255,0.03);
     border: 1px solid rgba(255,255,255,0.07);
     border-radius: 14px;
-    overflow: hidden;
-    backdrop-filter: blur(20px);
+    overflow-x: auto;
   }
 
   .books-table {
@@ -60,25 +41,21 @@ const styles = `
 
   .books-table thead {
     background: rgba(99,102,241,0.1);
-    border-bottom: 1px solid rgba(255,255,255,0.07);
   }
 
   .books-table th {
-    padding: 1rem 1.5rem;
+    padding: 0.7rem 0.9rem;
     text-align: left;
     font-family: 'Syne', sans-serif;
-    font-weight: 700;
-    font-size: 0.85rem;
+    font-size: 0.75rem;
     color: #a5b4fc;
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
   }
 
   .books-table td {
-    padding: 1.2rem 1.5rem;
-    border-bottom: 1px solid rgba(255,255,255,0.07);
-    color: rgba(255,255,255,0.7);
-    font-size: 0.9rem;
+    padding: 0.7rem 0.9rem;
+    border-bottom: 1px solid rgba(255,255,255,0.05);
+    color: rgba(255,255,255,0.75);
+    font-size: 0.8rem;
   }
 
   .books-table tbody tr:hover {
@@ -86,85 +63,62 @@ const styles = `
   }
 
   .book-title {
-    font-family: 'Syne', sans-serif;
-    font-weight: 600;
     color: #fff;
+    font-weight: 600;
   }
 
   .action-btns {
     display: flex;
-    gap: 0.5rem;
+    gap: 0.4rem;
   }
 
-  .edit-btn, .delete-btn {
-    padding: 0.4rem 0.8rem;
+  .edit-btn,
+  .delete-btn,
+  .save-btn,
+  .cancel-btn {
+    padding: 0.3rem 0.6rem;
+    border-radius: 7px;
     border: none;
-    border-radius: 8px;
-    color: #fff;
-    font-family: 'DM Sans', sans-serif;
-    font-weight: 600;
-    font-size: 0.75rem;
     cursor: pointer;
-    transition: all 0.2s ease;
+    font-size: 0.72rem;
+    font-weight: 600;
   }
 
   .edit-btn {
     background: rgba(99,102,241,0.2);
-    border: 1px solid rgba(99,102,241,0.3);
     color: #a5b4fc;
-  }
-
-  .edit-btn:hover {
-    background: rgba(99,102,241,0.3);
   }
 
   .delete-btn {
     background: rgba(239,68,68,0.2);
-    border: 1px solid rgba(239,68,68,0.3);
     color: #fca5a5;
   }
 
-  .delete-btn:hover {
-    background: rgba(239,68,68,0.3);
+  .save-btn {
+    background: rgba(16,185,129,0.2);
+    color: #6ee7b7;
   }
 
-  .loading {
+  .cancel-btn {
+    background: rgba(255,255,255,0.08);
+    color: #fff;
+  }
+
+  .edit-input {
+    width: 100%;
+    background: rgba(255,255,255,0.05);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 6px;
+    padding: 0.4rem;
+    color: #fff;
+    font-size: 0.8rem;
+  }
+
+  .loading,
+  .empty-state {
     text-align: center;
     padding: 2rem;
     color: rgba(255,255,255,0.5);
-  }
-
-  .spinner {
-    display: inline-block;
-    width: 40px;
-    height: 40px;
-    border: 3px solid rgba(255,255,255,0.1);
-    border-top-color: #6366f1;
-    border-radius: 50%;
-    animation: spin 0.8s linear infinite;
-    margin-bottom: 1rem;
-  }
-
-  @keyframes spin {
-    to { transform: rotate(360deg); }
-  }
-
-  .empty-state {
-    text-align: center;
-    padding: 3rem;
-    border-radius: 16px;
-    background: rgba(255,255,255,0.02);
-    border: 1.5px dashed rgba(255,255,255,0.1);
-  }
-
-  .empty-icon {
-    font-size: 3rem;
-    margin-bottom: 1rem;
-  }
-
-  .empty-text {
-    color: rgba(255,255,255,0.4);
-    font-size: 0.95rem;
   }
 
   .error-message {
@@ -173,29 +127,7 @@ const styles = `
     border-radius: 12px;
     padding: 1rem;
     color: #fca5a5;
-    font-size: 0.9rem;
-    margin-bottom: 1.5rem;
-  }
-
-  @media (max-width: 768px) {
-    .page-header {
-      flex-direction: column;
-      align-items: flex-start;
-      gap: 1rem;
-    }
-
-    .books-table {
-      font-size: 0.85rem;
-    }
-
-    .books-table th,
-    .books-table td {
-      padding: 0.8rem 1rem;
-    }
-
-    .action-btns {
-      flex-direction: column;
-    }
+    margin-bottom: 1rem;
   }
 `;
 
@@ -203,6 +135,16 @@ function ManageBooks() {
   const [books, setBooks] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [editingBook, setEditingBook] = useState(null);
+
+  const [editForm, setEditForm] = useState({
+    Title: "",
+    ISBN: "",
+    Genre: "",
+    TotalCopies: "",
+    AvailableCopies: "",
+    Publisher: ""
+  });
 
   useEffect(() => {
     loadBooks();
@@ -210,12 +152,11 @@ function ManageBooks() {
 
   const loadBooks = async () => {
     setLoading(true);
-    setError("");
     try {
       const response = await axios.get("http://localhost:5000/api/books");
       setBooks(response.data.books);
     } catch (err) {
-      setError("Failed to load books. Please try again.");
+      setError("Failed to load books.");
       console.error(err);
     } finally {
       setLoading(false);
@@ -223,8 +164,7 @@ function ManageBooks() {
   };
 
   const handleDelete = async (bookID) => {
-    if (!window.confirm("Are you sure you want to delete this book?")) return;
-
+    if (!window.confirm("Delete this book?")) return;
     try {
       await axios.delete(`http://localhost:5000/api/books/${bookID}`);
       alert("Book deleted successfully!");
@@ -235,29 +175,55 @@ function ManageBooks() {
     }
   };
 
+  const handleEdit = (book) => {
+    setEditingBook(book.BookID);
+    setEditForm({
+      Title: book.Title,
+      ISBN: book.ISBN,
+      Genre: book.Genre,
+      TotalCopies: book.TotalCopies,
+      AvailableCopies: book.AvailableCopies,
+      Publisher: book.Publisher
+    });
+  };
+
+  const handleUpdate = async (bookID) => {
+    try {
+      await axios.put(`http://localhost:5000/api/books/${bookID}`, editForm);
+      alert("Book updated successfully!");
+      setEditingBook(null);
+      loadBooks();
+    } catch (err) {
+      alert("Failed to update book.");
+      console.error(err);
+    }
+  };
+
   return (
     <>
       <style>{styles}</style>
+
       <div className="manage-books-container">
         <div className="page-header">
           <div>
             <h1>📚 Manage Books</h1>
-            <p style={{ color: 'rgba(255,255,255,0.4)', marginTop: '0.5rem' }}>View, edit, and delete books from the library</p>
           </div>
-          <button className="add-btn">➕ Add New Book</button>
+          {/* Add New Book button removed from here */}
         </div>
 
-        {error && <div className="error-message">⚠️ {error}</div>}
+        {error && (
+          <div className="error-message">
+            ⚠️ {error}
+          </div>
+        )}
 
         {loading ? (
           <div className="loading">
-            <div className="spinner"></div>
-            <p>Loading books...</p>
+            Loading books...
           </div>
         ) : books.length === 0 ? (
           <div className="empty-state">
-            <div className="empty-icon">📭</div>
-            <div className="empty-text">No books in the library yet.</div>
+            No books available.
           </div>
         ) : (
           <div className="books-table-container">
@@ -267,30 +233,92 @@ function ManageBooks() {
                   <th>Title</th>
                   <th>ISBN</th>
                   <th>Genre</th>
-                  <th>Total Copies</th>
+                  <th>Total</th>
                   <th>Available</th>
                   <th>Publisher</th>
-                  <th>Action</th>
+                  <th>Actions</th>
                 </tr>
               </thead>
+
               <tbody>
                 {books.map((book) => (
                   <tr key={book.BookID}>
-                    <td className="book-title">{book.Title}</td>
-                    <td>{book.ISBN}</td>
+                    <td>
+                      {editingBook === book.BookID ? (
+                        <input
+                          className="edit-input"
+                          value={editForm.Title}
+                          onChange={(e) =>
+                            setEditForm({
+                              ...editForm,
+                              Title: e.target.value
+                            })
+                          }
+                        />
+                      ) : (
+                        <span className="book-title">
+                          {book.Title}
+                        </span>
+                      )}
+                    </td>
+
+                    <td>
+                      {editingBook === book.BookID ? (
+                        <input
+                          className="edit-input"
+                          value={editForm.ISBN}
+                          onChange={(e) =>
+                            setEditForm({
+                              ...editForm,
+                              ISBN: e.target.value
+                            })
+                          }
+                        />
+                      ) : (
+                        book.ISBN
+                      )}
+                    </td>
+
                     <td>{book.Genre}</td>
                     <td>{book.TotalCopies}</td>
                     <td>{book.AvailableCopies}</td>
                     <td>{book.Publisher}</td>
+
                     <td>
                       <div className="action-btns">
-                        <button className="edit-btn">Edit</button>
-                        <button 
-                          className="delete-btn"
-                          onClick={() => handleDelete(book.BookID)}
-                        >
-                          Delete
-                        </button>
+                        {editingBook === book.BookID ? (
+                          <>
+                            <button
+                              className="save-btn"
+                              onClick={() => handleUpdate(book.BookID)}
+                            >
+                              Save
+                            </button>
+
+                            <button
+                              className="cancel-btn"
+                              onClick={() => setEditingBook(null)}
+                            >
+                              Cancel
+                            </button>
+                          </>
+                        ) : (
+                          <>
+                            <button
+                              className="edit-btn"
+                              onClick={() => handleEdit(book)}
+                            >
+                              Edit
+                            </button>
+
+                            <button
+                              className="delete-btn"
+                              onClick={() => handleDelete(book.BookID)}
+                            >
+                              Delete
+                            </button>
+                          </>
+                        )}
                       </div>
                     </td>
                   </tr>

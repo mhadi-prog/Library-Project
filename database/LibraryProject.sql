@@ -79,6 +79,7 @@ CREATE TABLE Payments(
 
     FOREIGN KEY(FineID) REFERENCES Fines(FineID)
 );
+ALTER TABLE BorrowTransactions ADD Status VARCHAR(50) DEFAULT 'Pending'
 -- USERS
 INSERT INTO Users (Name, Email, Password, Role, Department, BatchYear)
 VALUES

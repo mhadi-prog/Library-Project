@@ -285,13 +285,20 @@ const styles = `
 
 function Signup() {
     const navigate = useNavigate();
-    const [form, setForm] = useState({ name: "", email: "", password: "", role: "Student" });
+    // 1. Updated State to include Department and BatchYear
+    const [form, setForm] = useState({ 
+        name: "", 
+        email: "", 
+        password: "", 
+        role: "Student",
+        department: "",
+        batchYear: ""
+    });
     const [errors, setErrors] = useState({});
     const [loading, setLoading] = useState(false);
 
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
-    // Regex for basic email validation
     const validateField = (field, value) => {
         switch (field) {
             case "name":
@@ -308,21 +315,24 @@ function Signup() {
             case "role":
                 if (!value) return "Role is required";
                 return "";
+            // 2. Added validation for new fields
+            case "department":
+                if (form.role === "Student" && !value.trim()) return "Department is required";
+                return "";
+            case "batchYear":
+                if (form.role === "Student" && !value) return "Batch Year is required";
+                return "";
             default:
                 return "";
         }
     };
 
-    // Handle input changes
     const update = (field) => (e) => {
         const value = e.target.value;
         setForm({ ...form, [field]: value });
-
-        // Validate live
         setErrors({ ...errors, [field]: validateField(field, value) });
     };
 
-    // Validate whole form before submit
     const validateForm = () => {
         const newErrors = {};
         Object.keys(form).forEach((field) => {
@@ -337,10 +347,17 @@ function Signup() {
         e.preventDefault();
         if (!validateForm()) return;
         setLoading(true);
+        
+        // 3. Prepare payload (Clean up NULLs for Admin)
+        const payload = {
+            ...form,
+            department: form.role === 'Student' ? form.department : null,
+            batchYear: form.role === 'Student' ? form.batchYear : null
+        };
+
         try {
-            const res = await axios.post("http://localhost:5000/api/auth/signup", form);
+            const res = await axios.post("http://localhost:5000/api/auth/signup", payload);
             
-            // Store user data in localStorage
             if (res.data.user) {
                 localStorage.setItem('userID', res.data.user.userID || res.data.user.id);
                 localStorage.setItem('userRole', res.data.user.role);
@@ -408,6 +425,34 @@ function Signup() {
                                 />
                                 {errors.name && <div className="auth-error">{errors.name}</div>}
                             </div>
+                            
+                            {/* 4. Conditionally show Student-specific fields */}
+                            {form.role === "Student" && (
+                                <>
+                                    <div>
+                                        <label className="field-label">Department</label>
+                                        <input
+                                            className="field-input"
+                                            placeholder="e.g. Computer Science"
+                                            value={form.department}
+                                            onChange={update("department")}
+                                        />
+                                        {errors.department && <div className="auth-error">{errors.department}</div>}
+                                    </div>
+                                    <div>
+                                        <label className="field-label">Batch Year</label>
+                                        <input
+                                            className="field-input"
+                                            type="number"
+                                            placeholder="e.g. 2023"
+                                            value={form.batchYear}
+                                            onChange={update("batchYear")}
+                                        />
+                                        {errors.batchYear && <div className="auth-error">{errors.batchYear}</div>}
+                                    </div>
+                                </>
+                            )}
+
                             <div>
                                 <label className="field-label">Email</label>
                                 <input
