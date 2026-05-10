@@ -204,3 +204,93 @@ exports.rejectBorrowRequest = async (req, res) => {
         });
     }
 };
+
+// Return book (Student action - marks book as returned & auto-calculates fine if overdue)
+exports.returnBook = async (req, res) => {
+    try {
+        const { transactionID, returnDate } = req.body;
+
+        if (!transactionID || !returnDate) {
+            return res.status(400).json({
+                message: "Data missing - transactionID and returnDate required"
+            });
+        }
+
+        // 1. Get transaction with book details
+        const transactionResult = await pool.request()
+            .input('transactionID', transactionID)
+            .query(`
+                SELECT bt.*, b.Title as BookTitle
+                FROM BorrowTransactions bt
+                JOIN Books b ON bt.BookID = b.BookID
+                WHERE bt.TransactionID = @transactionID
+            `);
+
+        if (transactionResult.recordset.length === 0) {
+            return res.status(404).json({
+                message: "Transaction not found"
+            });
+        }
+
+        const transaction = transactionResult.recordset[0];
+
+        // Check if already returned
+        if (transaction.ReturnDate) {
+            return res.status(400).json({
+                message: "Book has already been returned"
+            });
+        }
+
+        // 2. Update return date
+        await pool.request()
+            .input('transactionID', transactionID)
+            .input('returnDate', returnDate)
+            .query(`
+                UPDATE BorrowTransactions
+                SET ReturnDate = @returnDate
+                WHERE TransactionID = @transactionID
+            `);
+
+        // 3. Increase available copies
+        await pool.request()
+            .input('bookID', transaction.BookID)
+            .query(`
+                UPDATE Books
+                SET AvailableCopies = AvailableCopies + 1
+                WHERE BookID = @bookID
+            `);
+
+        // 4. AUTO-CREATE FINE IF OVERDUE
+        const returnDateObj = new Date(returnDate);
+        const dueDateObj = new Date(transaction.DueDate);
+        
+        if (returnDateObj > dueDateObj) {
+            const daysOverdue = Math.ceil((returnDateObj - dueDateObj) / (1000 * 60 * 60 * 24));
+            const fineAmount = daysOverdue * 10; // 10 PKR per day
+
+            await pool.request()
+                .input('transactionID', transactionID)
+                .input('fineAmount', fineAmount)
+                .input('daysOverdue', daysOverdue)
+                .input('bookTitle', transaction.BookTitle)
+                .input('dueDate', transaction.DueDate)
+                .input('returnDate', returnDate)
+                .query(`
+                    INSERT INTO Fines (TransactionID, FineAmount, DaysOverdue, BookTitle, DueDate, ReturnDate, PaidStatus)
+                    VALUES (@transactionID, @fineAmount, @daysOverdue, @bookTitle, @dueDate, @returnDate, 'Unpaid')
+                `);
+        }
+
+        return res.status(200).json({
+            message: "Book returned successfully"
+        });
+
+    } catch (err) {
+        console.error("Return book error:", err);
+
+        return res.status(500).json({
+            message: "Error returning book",
+            error: err.message
+        });
+    }
+};

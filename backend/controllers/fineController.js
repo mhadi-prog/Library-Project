@@ -39,19 +39,19 @@ exports.calculateFines = async (req, res) => {
                 IF EXISTS (SELECT 1 FROM Fines WHERE TransactionID = @transactionID)
                 BEGIN
                     UPDATE Fines
-                    SET Amount = @amount
+                    SET FineAmount = @fineAmount
                     WHERE TransactionID = @transactionID
                 END
                 ELSE
                 BEGIN
-                    INSERT INTO Fines (TransactionID, Amount, PaidStatus)
-                    VALUES (@transactionID, @amount, 'Unpaid')
+                    INSERT INTO Fines (TransactionID, FineAmount, PaidStatus)
+                    VALUES (@transactionID, @fineAmount, 'Unpaid')
                 END
             `;
 
             const fineRequest = pool.request();
             fineRequest.input('transactionID', row.TransactionID);
-            fineRequest.input('amount', fineAmount);
+            fineRequest.input('fineAmount', fineAmount);
 
             await fineRequest.query(upsertQuery);
         }
@@ -81,12 +81,14 @@ exports.getStudentFines = async (req, res) => {
         const query = `
             SELECT 
                 f.FineID,
-                f.Amount,
+                f.FineAmount,
+                f.DaysOverdue,
+                f.BookTitle,
+                f.DueDate,
+                f.ReturnDate,
                 f.PaidStatus,
                 bt.TransactionID,
                 bt.IssueDate,
-                bt.DueDate,
-                bt.ReturnDate,
                 b.Title,
                 b.ISBN
             FROM Fines f
@@ -102,7 +104,7 @@ exports.getStudentFines = async (req, res) => {
 
         const totalUnpaid = result.recordset
             .filter(f => f.PaidStatus === 'Unpaid')
-            .reduce((sum, f) => sum + parseFloat(f.Amount), 0);
+            .reduce((sum, f) => sum + parseFloat(f.FineAmount), 0);
 
         return res.status(200).json({
             fines: result.recordset,
@@ -151,7 +153,7 @@ exports.payFine = async (req, res) => {
         const fine = checkResult.recordset[0];
 
         // Prevent overpayment
-        if (amount > fine.Amount) {
+        if (amount > fine.FineAmount) {
             return res.status(400).json({
                 message: "Payment exceeds fine amount"
             });
@@ -171,11 +173,11 @@ exports.payFine = async (req, res) => {
         await paymentRequest.query(paymentQuery);
 
         // Mark fine as paid if fully cleared
-        const remaining = fine.Amount - amount;
+        const remaining = fine.FineAmount - amount;
 
         const updateQuery = `
             UPDATE Fines
-            SET Amount = @remainingAmount,
+            SET FineAmount = @remainingAmount,
                 PaidStatus = CASE 
                     WHEN @remainingAmount <= 0 THEN 'Paid'
                     ELSE 'Unpaid'
@@ -197,6 +199,96 @@ exports.payFine = async (req, res) => {
         console.error('Pay fine error:', err);
         return res.status(500).json({
             message: "Error processing payment",
+            error: err.message
+        });
+    }
+};
+// ======================================================
+// 4. GET ALL FINES (for admin)
+// ======================================================
+exports.getAllFines = async (req, res) => {
+    try {
+        const query = `
+            SELECT 
+                f.FineID,
+                f.TransactionID,
+                f.FineAmount,
+                f.DaysOverdue,
+                f.BookTitle,
+                f.DueDate,
+                f.ReturnDate,
+                f.PaidStatus,
+                f.CreatedDate,
+                bt.UserID
+            FROM Fines f
+            JOIN BorrowTransactions bt ON f.TransactionID = bt.TransactionID
+            ORDER BY f.FineID DESC
+        `;
+
+        const result = await pool.request().query(query);
+
+        return res.status(200).json({
+            fines: result.recordset
+        });
+
+    } catch (err) {
+        console.error('Get all fines error:', err);
+        return res.status(500).json({
+            message: "Error fetching fines",
+            error: err.message
+        });
+    }
+};
+
+// ======================================================
+// 5. MARK FINE AS PAID (Admin action)
+// ======================================================
+exports.markFineAsPaid = async (req, res) => {
+    try {
+        const { fineID } = req.body;
+
+        if (!fineID) {
+            return res.status(400).json({
+                message: "Fine ID required"
+            });
+        }
+
+        const request = pool.request();
+        request.input('fineID', fineID);
+
+        // Check fine exists
+        const checkQuery = `
+            SELECT * FROM Fines WHERE FineID = @fineID
+        `;
+
+        const checkResult = await request.query(checkQuery);
+
+        if (checkResult.recordset.length === 0) {
+            return res.status(404).json({
+                message: "Fine not found"
+            });
+        }
+
+        // Update fine status to Paid
+        const updateQuery = `
+            UPDATE Fines
+            SET PaidStatus = 'Paid'
+            WHERE FineID = @fineID
+        `;
+
+        const updateRequest = pool.request();
+        updateRequest.input('fineID', fineID);
+
+        await updateRequest.query(updateQuery);
+
+        return res.status(200).json({
+            message: "Fine marked as paid successfully"
+        });
+
+    } catch (err) {
+        console.error('Mark fine as paid error:', err);
+        return res.status(500).json({
+            message: "Error marking fine as paid",
             error: err.message
         });
     }
