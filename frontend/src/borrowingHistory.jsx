@@ -40,6 +40,7 @@ function BorrowingHistory() {
       setHistory(response.data.history || []);
       setSearchPerformed(true);
     } catch (err) {
+      console.error("Search error:", err);
       setHistory([]);
       setSearchPerformed(true);
     } finally {
@@ -51,12 +52,16 @@ function BorrowingHistory() {
     if (!window.confirm("Confirm return?")) return;
     try {
       // Use standard ISO string for database compatibility
-      await axios.put(`http://localhost:5000/api/borrow/return`, {
+      await axios.put(`http://localhost:5000/api/borrow-request/return`, {
         transactionID: id,
         returnDate: new Date().toISOString()
       });
       alert("Book returned and stock updated!");
-      handleSearch(); // Refresh data to show 'Returned' status
+      // Refresh data with current searchTerm - don't call handleSearch() without params
+      if (searchTerm.trim()) {
+        const response = await axios.get(`http://localhost:5000/api/user/history?searchTerm=${searchTerm}`);
+        setHistory(response.data.history || []);
+      }
     } catch (err) { 
       alert(err.response?.data?.message || "Return failed"); 
     }
@@ -92,7 +97,7 @@ function BorrowingHistory() {
                 <th>Book Title</th>
                 <th>Due Date</th>
                 <th>Status</th>
-                <th>Action</th>
+                
               </tr>
             </thead>
             <tbody>
@@ -105,11 +110,7 @@ function BorrowingHistory() {
                       {record.ReturnDate ? 'Returned' : (new Date(record.DueDate) < new Date() ? 'Overdue' : 'Active')}
                     </span>
                   </td>
-                  <td>
-                    {!record.ReturnDate && (
-                      <button className="return-btn" onClick={() => handleProcessReturn(record.TransactionID)}>Return</button>
-                    )}
-                  </td>
+                  
                 </tr>
               ))}
             </tbody>

@@ -116,15 +116,48 @@ const styles = `
     color: #fca5a5;
   }
 
-  .overdue-days {
+  .status-badge {
     display: inline-block;
-    background: rgba(239,68,68,0.15);
-    border: 1px solid rgba(239,68,68,0.3);
-    border-radius: 8px;
-    padding: 0.3rem 0.6rem;
-    font-size: 0.75rem;
-    color: #fca5a5;
+    border-radius: 6px;
+    padding: 0.4rem 0.8rem;
+    font-size: 0.7rem;
     font-weight: 600;
+    text-transform: uppercase;
+  }
+
+  .status-paid {
+    background: rgba(16,185,129,0.15);
+    color: #6ee7b7;
+    border: 1px solid rgba(16,185,129,0.3);
+  }
+
+  .status-unpaid {
+    background: rgba(239,68,68,0.15);
+    color: #fca5a5;
+    border: 1px solid rgba(239,68,68,0.3);
+  }
+
+  .action-btn {
+    padding: 0.5rem 1rem;
+    background: rgba(16,185,129,0.15);
+    border: 1.5px solid rgba(16,185,129,0.3);
+    border-radius: 8px;
+    color: #6ee7b7;
+    font-family: 'DM Sans', sans-serif;
+    font-weight: 600;
+    font-size: 0.75rem;
+    cursor: pointer;
+    transition: all 0.2s ease;
+  }
+
+  .action-btn:hover:not(:disabled) {
+    background: rgba(16,185,129,0.25);
+    border-color: rgba(16,185,129,0.5);
+  }
+
+  .action-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
   }
 
   .loading {
@@ -176,72 +209,92 @@ const styles = `
     margin-bottom: 1.5rem;
   }
 
-  .action-btn {
-    padding: 0.4rem 0.8rem;
-    background: rgba(99,102,241,0.2);
-    border: 1px solid rgba(99,102,241,0.3);
-    border-radius: 8px;
-    color: #a5b4fc;
-    font-family: 'DM Sans', sans-serif;
-    font-weight: 600;
-    font-size: 0.75rem;
-    cursor: pointer;
-    transition: all 0.2s ease;
-  }
-
-  .action-btn:hover {
-    background: rgba(99,102,241,0.3);
-    border-color: rgba(99,102,241,0.5);
-  }
-
-  @media (max-width: 768px) {
-    .stats-grid {
-      grid-template-columns: 1fr;
-    }
-
-    .fines-table {
-      font-size: 0.85rem;
-    }
-
-    .fines-table th,
-    .fines-table td {
-      padding: 0.8rem 1rem;
-    }
+  .success-message {
+    background: rgba(16,185,129,0.1);
+    border: 1px solid rgba(16,185,129,0.25);
+    border-radius: 12px;
+    padding: 1rem;
+    color: #6ee7b7;
+    font-size: 0.9rem;
+    margin-bottom: 1.5rem;
   }
 `;
 
 function CalculateFines() {
-  const [overdueBooks, setOverdueBooks] = useState([]);
+  const [fines, setFines] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
-  const [totalFines, setTotalFines] = useState(0);
+  const [success, setSuccess] = useState("");
+  const [markingAsPaid, setMarkingAsPaid] = useState(null);
+  const [stats, setStats] = useState({
+    totalUnpaid: 0,
+    totalPaid: 0,
+    unpaidCount: 0
+  });
 
   useEffect(() => {
-    loadFines();
+    loadAllFines();
   }, []);
 
-  const loadFines = async () => {
+  const loadAllFines = async () => {
     setLoading(true);
     setError("");
     try {
-      const response = await axios.get("http://localhost:5000/api/fines/calculate");
-      const books = response.data.overdueBooks;
-      setOverdueBooks(books);
-
-      // Calculate total fines
-      const total = books.reduce((sum, book) => sum + book.CalculatedFine, 0);
-      setTotalFines(total);
+      const response = await axios.get("http://localhost:5000/api/fines/all");
+      setFines(response.data.fines || []);
+      calculateStats(response.data.fines || []);
     } catch (err) {
-      setError("Failed to calculate fines. Please try again.");
+      setError("Failed to load fines. Please try again.");
       console.error(err);
     } finally {
       setLoading(false);
     }
   };
 
-  const handleCreateFineRecord = (transactionID, amount) => {
-    alert(`Create fine record for Transaction ${transactionID}: Rs. ${amount}`);
-    // In real app, would call API to create fine record
+  const calculateStats = (fineList) => {
+    const totalUnpaid = fineList
+      .filter(f => f.PaidStatus === 'Unpaid')
+      .reduce((sum, fine) => sum + (fine.FineAmount || 0), 0);
+    const totalPaid = fineList
+      .filter(f => f.PaidStatus === 'Paid')
+      .reduce((sum, fine) => sum + (fine.FineAmount || 0), 0);
+    const unpaidCount = fineList.filter(f => f.PaidStatus === 'Unpaid').length;
+
+    setStats({
+      totalUnpaid: totalUnpaid.toFixed(2),
+      totalPaid: totalPaid.toFixed(2),
+      unpaidCount
+    });
+  };
+
+  const handleMarkAsPaid = async (fineID) => {
+    if (!window.confirm("Mark this fine as paid?")) return;
+
+    setMarkingAsPaid(fineID);
+    setError("");
+    setSuccess("");
+
+    try {
+      await axios.post("http://localhost:5000/api/fines/mark-paid", {
+        fineID: fineID
+      });
+
+      setSuccess("✓ Fine marked as paid!");
+      setTimeout(() => {
+        loadAllFines();
+        setSuccess("");
+      }, 1500);
+    } catch (err) {
+      setError(err.response?.data?.message || "Failed to mark fine as paid");
+      console.error(err);
+    } finally {
+      setMarkingAsPaid(null);
+    }
+  };
+
+  const formatDate = (dateString) => {
+    if (!dateString) return "-";
+    return new Date(dateString).toLocaleDateString();
   };
 
   return (
@@ -249,72 +302,82 @@ function CalculateFines() {
       <style>{styles}</style>
       <div className="calculate-fines-container">
         <div className="page-header">
-          <h1>📊 Calculate Fines</h1>
-          <p>Compute fines for overdue books (Rs. 10 per day)</p>
+          <h1>💰 Manage Fines</h1>
+          <p>View and mark all student fines as paid</p>
         </div>
 
         {error && <div className="error-message">⚠️ {error}</div>}
+        {success && <div className="success-message">{success}</div>}
 
         {loading ? (
           <div className="loading">
             <div className="spinner"></div>
-            <p>Calculating fines...</p>
+            <p>Loading fines...</p>
           </div>
         ) : (
           <>
             <div className="stats-grid">
               <div className="stat-card">
-                <div className="stat-icon">📚</div>
-                <div className="stat-value">{overdueBooks.length}</div>
-                <div className="stat-label">Overdue Books</div>
+                <div className="stat-icon">📊</div>
+                <div className="stat-value">{stats.unpaidCount}</div>
+                <div className="stat-label">Unpaid Fines</div>
               </div>
               <div className="stat-card">
-                <div className="stat-icon">💰</div>
-                <div className="stat-value">Rs. {totalFines}</div>
-                <div className="stat-label">Total Fines</div>
+                <div className="stat-icon">💸</div>
+                <div className="stat-value">PKR {stats.totalUnpaid}</div>
+                <div className="stat-label">Total Unpaid</div>
               </div>
               <div className="stat-card">
-                <div className="stat-icon">📈</div>
-                <div className="stat-value">{overdueBooks.length > 0 ? (totalFines / overdueBooks.length).toFixed(0) : 0}</div>
-                <div className="stat-label">Average Fine</div>
+                <div className="stat-icon">✓</div>
+                <div className="stat-value">PKR {stats.totalPaid}</div>
+                <div className="stat-label">Total Paid</div>
               </div>
             </div>
 
-            {overdueBooks.length === 0 ? (
+            {fines.length === 0 ? (
               <div className="empty-state">
                 <div className="empty-icon">🎉</div>
-                <div className="empty-text">No overdue books found. All books are on time!</div>
+                <div className="empty-text">No fines found. All students are clear!</div>
               </div>
             ) : (
               <div className="fines-table-container">
                 <table className="fines-table">
                   <thead>
                     <tr>
-                      <th>Book Title</th>
                       <th>Student ID</th>
+                      <th>Book Title</th>
                       <th>Due Date</th>
-                      <th>Overdue Days</th>
+                      <th>Return Date</th>
+                      <th>Days Overdue</th>
                       <th>Fine Amount</th>
+                      <th>Status</th>
                       <th>Action</th>
                     </tr>
                   </thead>
                   <tbody>
-                    {overdueBooks.map((book, index) => (
-                      <tr key={index}>
-                        <td className="book-title">{book.Title}</td>
-                        <td>{book.UserID}</td>
-                        <td>{new Date(book.DueDate).toLocaleDateString()}</td>
+                    {fines.map((fine) => (
+                      <tr key={fine.FineID}>
+                        <td>{fine.UserID}</td>
+                        <td className="book-title">{fine.BookTitle || "Unknown"}</td>
+                        <td>{formatDate(fine.DueDate)}</td>
+                        <td>{formatDate(fine.ReturnDate)}</td>
+                        <td>{fine.DaysOverdue || 0} days</td>
+                        <td className="fine-amount">PKR {(fine.FineAmount || 0).toFixed(2)}</td>
                         <td>
-                          <span className="overdue-days">{book.OverdueDays} days</span>
+                          <span className={`status-badge ${fine.PaidStatus === 'Paid' ? 'status-paid' : 'status-unpaid'}`}>
+                            {fine.PaidStatus}
+                          </span>
                         </td>
-                        <td className="fine-amount">Rs. {book.CalculatedFine}</td>
                         <td>
-                          <button 
-                            className="action-btn"
-                            onClick={() => handleCreateFineRecord(book.TransactionID, book.CalculatedFine)}
-                          >
-                            Record Fine
-                          </button>
+                          {fine.PaidStatus === 'Unpaid' && (
+                            <button
+                              className="action-btn"
+                              onClick={() => handleMarkAsPaid(fine.FineID)}
+                              disabled={markingAsPaid === fine.FineID}
+                            >
+                              {markingAsPaid === fine.FineID ? "Processing..." : "✓ Mark Paid"}
+                            </button>
+                          )}
                         </td>
                       </tr>
                     ))}

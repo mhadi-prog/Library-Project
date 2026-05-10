@@ -165,16 +165,6 @@ const styles = `
     margin-bottom: 1.5rem;
   }
 
-  .success-message {
-    background: rgba(16,185,129,0.1);
-    border: 1px solid rgba(16,185,129,0.25);
-    border-radius: 12px;
-    padding: 1rem;
-    color: #6ee7b7;
-    font-size: 0.9rem;
-    margin-bottom: 1.5rem;
-  }
-
   .empty-state {
     text-align: center;
     padding: 3rem;
@@ -191,29 +181,6 @@ const styles = `
   .empty-text {
     color: rgba(255,255,255,0.4);
     font-size: 0.95rem;
-  }
-
-  .action-btn {
-    padding: 0.5rem 1rem;
-    background: rgba(99,102,241,0.15);
-    border: 1.5px solid rgba(99,102,241,0.3);
-    border-radius: 8px;
-    color: #a5b4fc;
-    font-family: 'DM Sans', sans-serif;
-    font-weight: 600;
-    font-size: 0.8rem;
-    cursor: pointer;
-    transition: all 0.2s ease;
-  }
-
-  .action-btn:hover {
-    background: rgba(99,102,241,0.25);
-    border-color: rgba(99,102,241,0.5);
-  }
-
-  .action-btn:disabled {
-    opacity: 0.5;
-    cursor: not-allowed;
   }
 
   .section-title {
@@ -259,8 +226,6 @@ function ViewFines() {
     totalPaid: 0,
     unpaidCount: 0
   });
-  const [recalculateLoading, setRecalculateLoading] = useState(false);
-  const [recalculateSuccess, setRecalculateSuccess] = useState(false);
 
   const userID = localStorage.getItem('userID');
 
@@ -301,39 +266,6 @@ function ViewFines() {
     });
   };
 
-  const handleRecalculateFines = async () => {
-    setRecalculateLoading(true);
-    setRecalculateSuccess(false);
-    setError("");
-    try {
-      await axios.get("http://localhost:5000/api/fines/calculate");
-      setRecalculateSuccess(true);
-      setTimeout(() => {
-        loadFines();
-        setRecalculateSuccess(false);
-      }, 1500);
-    } catch (err) {
-      setError("Failed to recalculate fines. Please try again.");
-      console.error(err);
-    } finally {
-      setRecalculateLoading(false);
-    }
-  };
-
-  const handlePayFine = async (fineID) => {
-    if (!window.confirm("Pay this fine?")) return;
-
-    try {
-      await axios.post("http://localhost:5000/api/fines/pay", {
-        fineID: fineID
-      });
-      loadFines();
-    } catch (err) {
-      setError("Failed to process payment. Please try again.");
-      console.error(err);
-    }
-  };
-
   const formatDate = (dateString) => {
     if (!dateString) return "-";
     return new Date(dateString).toLocaleDateString();
@@ -345,18 +277,17 @@ function ViewFines() {
       <div className="fines-container">
         <div className="page-header">
           <h1>💰 My Fines</h1>
-          <p>View and manage your library fines</p>
+          <p>View your library fines (Admin will mark as paid when received)</p>
         </div>
 
         {error && <div className="error-message">⚠️ {error}</div>}
-        {recalculateSuccess && <div className="success-message">✓ Fines recalculated successfully!</div>}
 
         <div className="calculation-info">
           <h3>📋 How Fines are Calculated</h3>
           <p>• Fine Amount: PKR 10 per day</p>
           <p>• Calculated from: Due Date until book is returned</p>
           <p>• Status: Shows whether fine is paid or unpaid</p>
-          <p>• You can request admin to recalculate if dates have changed</p>
+          <p>• Contact admin to arrange payment</p>
         </div>
 
         {!loading && (
@@ -378,17 +309,6 @@ function ViewFines() {
             </div>
           </div>
         )}
-
-        <div style={{ display: 'flex', gap: '1rem', marginBottom: '2rem' }}>
-          <button 
-            className="action-btn"
-            onClick={handleRecalculateFines}
-            disabled={recalculateLoading}
-            style={{ padding: '0.7rem 1.5rem', fontSize: '0.9rem' }}
-          >
-            {recalculateLoading ? "Recalculating..." : "🔄 Recalculate Fines"}
-          </button>
-        </div>
 
         <div className="section-title">📊 Your Fines History</div>
 
@@ -412,7 +332,6 @@ function ViewFines() {
                 <th>Days Overdue</th>
                 <th>Fine Amount</th>
                 <th>Status</th>
-                <th>Action</th>
               </tr>
             </thead>
             <tbody>
@@ -437,16 +356,6 @@ function ViewFines() {
                       <span className={`status-badge ${fine.PaidStatus === 'Paid' ? 'status-paid' : 'status-unpaid'}`}>
                         {fine.PaidStatus}
                       </span>
-                    </td>
-                    <td>
-                      {fine.PaidStatus === 'Unpaid' && (
-                        <button 
-                          className="action-btn"
-                          onClick={() => handlePayFine(fine.FineID)}
-                        >
-                          Pay
-                        </button>
-                      )}
                     </td>
                   </tr>
                 );
